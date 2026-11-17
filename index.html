@@ -276,10 +276,17 @@ function logout(){
 function migrar(){
   const cfg=store?.config; if(!cfg)return;
   const feitos=cfg.migr||[];
+  if(feitos.includes('v7')&&!feitos.includes('v8')){ // novas assinaturas: Claude Pro e Supabase Pro (em dólar, com IOF; dólar ~R$ 5,51 em nov/2026)
+    const c8=JSON.parse(JSON.stringify(cfg)); c8.fixos=c8.fixos||[];
+    const add=(nome,valor,chaves)=>{if(!c8.fixos.some(f=>norm(f.nome)===norm(nome)))c8.fixos.push({id:'f'+uid(),nome,valor,chaves})};
+    add('Claude Pro',115,['anthropic','claude ai']);
+    add('Supabase Pro',143,['supabase']);
+    c8.migr=[...feitos,'v8']; mutate({t:'cfg',cfg:c8},true); return;
+  }
   if(feitos.includes('v6')&&!feitos.includes('v7')){ // peças do ar já estão nas parcelas do cartão
     const c7=JSON.parse(JSON.stringify(cfg));
     c7.fixos=(c7.fixos||[]).filter(f=>!/^pecas ar condicionado/.test(norm(f.nome)));
-    c7.migr=[...feitos,'v7']; mutate({t:'cfg',cfg:c7},true); return;
+    c7.migr=[...feitos,'v7']; mutate({t:'cfg',cfg:c7},true); return migrar();
   }
   if(feitos.includes('v5')&&!feitos.includes('v6')){ // Eraldo é quem recebe a energia: era a mesma conta cadastrada duas vezes
     const c6=JSON.parse(JSON.stringify(cfg));
