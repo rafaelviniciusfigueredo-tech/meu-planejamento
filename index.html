@@ -276,12 +276,18 @@ function logout(){
 function migrar(){
   const cfg=store?.config; if(!cfg)return;
   const feitos=cfg.migr||[];
+  if(feitos.includes('v8')&&!feitos.includes('v9')){ // ração do Zoro: R$ 200 a cada 2 meses = R$ 100/mês
+    const c9=JSON.parse(JSON.stringify(cfg));
+    const r=(c9.fixos||[]).find(f=>/^racao zoro/.test(norm(f.nome)));
+    if(r){r.nome='Ração Zoro (R$ 200 a cada 2 meses)';r.valor=100}
+    c9.migr=[...feitos,'v9']; mutate({t:'cfg',cfg:c9},true); return;
+  }
   if(feitos.includes('v7')&&!feitos.includes('v8')){ // novas assinaturas: Claude Pro e Supabase Pro (em dólar, com IOF; dólar ~R$ 5,51 em nov/2026)
     const c8=JSON.parse(JSON.stringify(cfg)); c8.fixos=c8.fixos||[];
     const add=(nome,valor,chaves)=>{if(!c8.fixos.some(f=>norm(f.nome)===norm(nome)))c8.fixos.push({id:'f'+uid(),nome,valor,chaves})};
     add('Claude Pro',115,['anthropic','claude ai']);
     add('Supabase Pro',143,['supabase']);
-    c8.migr=[...feitos,'v8']; mutate({t:'cfg',cfg:c8},true); return;
+    c8.migr=[...feitos,'v8']; mutate({t:'cfg',cfg:c8},true); return migrar();
   }
   if(feitos.includes('v6')&&!feitos.includes('v7')){ // peças do ar já estão nas parcelas do cartão
     const c7=JSON.parse(JSON.stringify(cfg));
