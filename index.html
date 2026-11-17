@@ -276,6 +276,15 @@ function logout(){
 function migrar(){
   const cfg=store?.config; if(!cfg)return;
   const feitos=cfg.migr||[];
+  if(feitos.includes('v4')&&!feitos.includes('v5')){ // tetos plausíveis (nov/2026): sem carro para o trabalho, Uber só da namorada no fim de semana
+    const c5=JSON.parse(JSON.stringify(cfg));
+    const T={'alimentos':500,'lanches':300,'gasolina':250,'uber':100,'roles':150,'estetica':100,'compras':250,'farmacia':100,'pix para pessoas':300,'outros':150};
+    for(const c of c5.cats||[]){const v=T[norm(c.nome)];if(v!==undefined)c.teto=v}
+    c5.migr=[...feitos,'v5'];
+    const ops=[{t:'cfg',cfg:c5}];
+    for(const [id,t] of Object.entries(store.lanc||{}))if(t.valor<0&&t.mes>='2026-10'&&PARC.test(t.desc)&&t.cat!==SPECIAL.FIX)ops.push({t:'upd',id,patch:{cat:SPECIAL.FIX}});
+    mutate(ops,true); return;
+  }
   if(feitos.includes('v2')&&feitos.includes('v3')&&!feitos.includes('v4')){ // análise de set–nov/2026: fixos e salário reais
     const c4=JSON.parse(JSON.stringify(cfg)); const fx=c4.fixos=c4.fixos||[];
     const ach=n=>fx.find(f=>norm(f.nome)===norm(n));
@@ -300,7 +309,7 @@ function migrar(){
     for(const [id,t] of Object.entries(store.lanc||{})){
       if(t.valor<0&&t.data>='2026-08-01'&&t.cat!==SPECIAL.FIX&&chaves.some(([w])=>norm(t.desc).includes(w)))ops.push({t:'upd',id,patch:{cat:SPECIAL.FIX}});
     }
-    mutate(ops,true); return;
+    mutate(ops,true); return migrar();
   }
   if(!feitos.includes('v3')){ // regras genéricas demais (ex.: "pix enviado ·") pegavam todo Pix
     const c3=JSON.parse(JSON.stringify(cfg)); let mudou=false;
@@ -364,7 +373,7 @@ function categorize(desc,valor){
   if(MOVE_WORDS.some(w=>n.includes(w)))return SPECIAL.MOVE;
   if(valor>0)return SPECIAL.IN;
   if(cfg){
-    if(isFixo(n))return SPECIAL.FIX;
+    if(isFixo(n)||PARC.test(desc))return SPECIAL.FIX;
     for(const c of cfg.cats||[]){for(const w of c.chaves||[]){if(kw(n,w))return c.nome}}
     const outros=(cfg.cats||[]).find(c=>norm(c.nome)==='outros'); if(outros)return outros.nome;
   }
@@ -382,6 +391,7 @@ const PLUGGY_MAP=[
   [/bank fees|interests charged|tax on financial|late payment|overdraft/i,'Tarifas e juros'],
   [/shopping|online|clothing|electronics/i,'Compras'],
 ];
+const PARC=/\bPARC\s*\d{1,2}\/\d{1,2}/i; // parcela de cartão: já está nos custos fixos
 function isFixo(n){for(const f of cfgOf()?.fixos||[]){const fn=norm(f.nome);if(fn.length>=4&&n.includes(fn))return true;for(const w of f.chaves||[]){if(kw(n,w))return true}}return false}
 const EMPRESA=/\b(ltda|s\/?a|s\.a\.?|me|eireli|epp|servicos|serviços|comercio|comércio|pagamentos|bank|banco|instituicao|instituição|empreendimentos|participacoes|participações|intermediacao|intermediações|intermediacoes|solucoes|soluções|marketplace|drogaria|farmac|varejo|food)\b/i;
 function isPixPessoa(desc){const m=String(desc||'').match(/^pix enviado\s*·\s*(.+)$/i);if(!m)return false;const r=m[1].trim();if(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(r))return true;return !EMPRESA.test(r)}
@@ -398,7 +408,7 @@ function categorizePluggy(t){
   if(cfg&&cfg.regras){for(const k in cfg.regras){if(k&&n.includes(k))return cfg.regras[k]}}
   if(PLUGGY_MOVE.test(cp)||MOVE_WORDS.some(w=>n.includes(w)))return SPECIAL.MOVE;
   if(t.valor>0)return SPECIAL.IN;
-  if(isFixo(n))return SPECIAL.FIX;
+  if(isFixo(n)||PARC.test(t.desc))return SPECIAL.FIX;
   if(/real estate financing|financing/i.test(cp)&&/prestacao|hab/i.test(n))return SPECIAL.FIX;
   for(const c of cfg?.cats||[]){for(const w of c.chaves||[]){if(kw(n,w))return c.nome}}
   for(const [re,nome] of PLUGGY_MAP){if(re.test(cp)){const c=catName(nome);if(c)return c}}
