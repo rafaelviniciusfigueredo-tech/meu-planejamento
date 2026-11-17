@@ -276,6 +276,14 @@ function logout(){
 function migrar(){
   const cfg=store?.config; if(!cfg)return;
   const feitos=cfg.migr||[];
+  if(feitos.includes('v5')&&!feitos.includes('v6')){ // Eraldo é quem recebe a energia: era a mesma conta cadastrada duas vezes
+    const c6=JSON.parse(JSON.stringify(cfg));
+    c6.fixos=(c6.fixos||[]).filter(f=>norm(f.nome)!==norm('Eraldo (Pix mensal)'));
+    const en=c6.fixos.find(f=>norm(f.nome)==='energia');
+    if(en){en.nome='Energia (Pix ao Eraldo)';en.valor=280;en.chaves=[...new Set([...(en.chaves||[]),'eraldo cardoso'])]}
+    else c6.fixos.push({id:'f'+uid(),nome:'Energia (Pix ao Eraldo)',valor:280,chaves:['eraldo cardoso','coelba','neoenergia']});
+    c6.migr=[...feitos,'v6']; mutate({t:'cfg',cfg:c6},true); return;
+  }
   if(feitos.includes('v4')&&!feitos.includes('v5')){ // tetos plausíveis (nov/2026): sem carro para o trabalho, Uber só da namorada no fim de semana
     const c5=JSON.parse(JSON.stringify(cfg));
     const T={'alimentos':500,'lanches':300,'gasolina':250,'uber':100,'roles':150,'estetica':100,'compras':250,'farmacia':100,'pix para pessoas':300,'outros':150};
@@ -283,7 +291,7 @@ function migrar(){
     c5.migr=[...feitos,'v5'];
     const ops=[{t:'cfg',cfg:c5}];
     for(const [id,t] of Object.entries(store.lanc||{}))if(t.valor<0&&t.mes>='2026-10'&&PARC.test(t.desc)&&t.cat!==SPECIAL.FIX)ops.push({t:'upd',id,patch:{cat:SPECIAL.FIX}});
-    mutate(ops,true); return;
+    mutate(ops,true); return migrar();
   }
   if(feitos.includes('v2')&&feitos.includes('v3')&&!feitos.includes('v4')){ // análise de set–nov/2026: fixos e salário reais
     const c4=JSON.parse(JSON.stringify(cfg)); const fx=c4.fixos=c4.fixos||[];
