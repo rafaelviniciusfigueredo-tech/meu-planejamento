@@ -276,6 +276,32 @@ function logout(){
 function migrar(){
   const cfg=store?.config; if(!cfg)return;
   const feitos=cfg.migr||[];
+  if(feitos.includes('v2')&&feitos.includes('v3')&&!feitos.includes('v4')){ // análise de set–nov/2026: fixos e salário reais
+    const c4=JSON.parse(JSON.stringify(cfg)); const fx=c4.fixos=c4.fixos||[];
+    const ach=n=>fx.find(f=>norm(f.nome)===norm(n));
+    const put=(nome,valor,chaves,novoNome)=>{let f=ach(nome);if(!f){f={id:'f'+uid(),nome:novoNome||nome,valor:0,chaves:[]};fx.push(f)}
+      f.valor=valor;if(novoNome)f.nome=novoNome;if(chaves){f.chaves=[...new Set([...(f.chaves||[]),...chaves])]}};
+    put('Celular',54.91,['claro']);
+    put('Spotify',23.90,['spotify']);
+    put('Google Drive',9.99,['google one']);
+    put('Seguro',108.29,['prime gestao']);
+    put('Juros de obra',579.64,['prestacao hab'],'Juros de obra (Caixa)');
+    put('Parcela MRV',1075.02,['mrv','securitizacao','provincia de securitizacao']);
+    put('Eraldo (Pix mensal)',280,['eraldo cardoso']);
+    put('Mercado Livre Meli+',74.90,['melimais']);
+    put('Débito automático (PicPay)',100,['em debito automatico']);
+    put('Pix automático (permissão prévia)',9.99,null);
+    put('Tarifa mensagens BB',4.95,['tar msg']);
+    put('Parcelas cartão BB (até jun/27)',331.84,null);
+    c4.salario=6140;
+    c4.migr=[...feitos,'v4'];
+    const ops=[{t:'cfg',cfg:c4}];
+    const chaves=[['eraldo cardoso'],['melimais'],['prestacao hab'],['prime gestao'],['em debito automatico']];
+    for(const [id,t] of Object.entries(store.lanc||{})){
+      if(t.valor<0&&t.data>='2026-08-01'&&t.cat!==SPECIAL.FIX&&chaves.some(([w])=>norm(t.desc).includes(w)))ops.push({t:'upd',id,patch:{cat:SPECIAL.FIX}});
+    }
+    mutate(ops,true); return;
+  }
   if(!feitos.includes('v3')){ // regras genéricas demais (ex.: "pix enviado ·") pegavam todo Pix
     const c3=JSON.parse(JSON.stringify(cfg)); let mudou=false;
     for(const k of Object.keys(c3.regras||{})){const nk=k.replace(/·/g,' ').replace(/\s+/g,' ').trim();if(nk.length<4||GENERICO.test(nk)&&!nk.replace(GENERICO,'').trim()){delete c3.regras[k];mudou=true}}
@@ -289,6 +315,7 @@ function migrar(){
   if(!store.lanc[rid])ops.push({t:'set',id:rid,doc:{banco:'PicPay',cat:'Outros',data:'2026-11-15',desc:'PIX enviado · GOPAG SOLUCOES FINANCEIRAS LTDA',mes:'2026-11',origem:'pluggy',valor:-52.45}});
   c2.migr=[...feitos,'v2']; ops.push({t:'cfg',cfg:c2});
   mutate(ops,true);
+  migrar();
 }
 async function afterLogin(){
   net={state:'busy',msg:'Abrindo seus dados no Drive…'};render();
@@ -555,6 +582,30 @@ function vRosca(c){
     <div class="legend">${top.map(([n,v],i)=>`<div class="kv"><span><i style="background:var(--c${i+1})"></i>${esc(n)}</span><span class="num">${fmt(v)} <span class="muted">${Math.round(v/tot*100)}%</span></span></div>`).join('')}</div></div></div>`;
 }
 
+/* cartões: compras do mês, faturas pagas e parcelas que ainda faltam */
+function parcelas(){
+  const g={};
+  for(const t of allTxs()){const m=String(t.desc).match(/^(.*?)\s*PARC\s*(\d{1,2})\/(\d{1,2})/i);if(!m||t.valor>=0)continue;
+    const cur=+m[2],tot=+m[3];const k=(t.banco||'')+'|'+norm(m[1])+'|'+tot+'|'+Math.round(-t.valor);
+    if(!g[k]||cur>g[k].cur)g[k]={nome:m[1].replace(/^(MP|DL|DM)\*/i,'').replace(/\*/g,' ').trim(),banco:t.banco,cur,tot,valor:-t.valor,mes:t.mes}}
+  return Object.values(g).map(p=>({...p,faltam:p.tot-p.cur,fim:shiftMonth(p.mes,p.tot-p.cur)})).filter(p=>p.fim>=ym).sort((a,b)=>b.fim.localeCompare(a.fim));
+}
+function vCartoes(){
+  const mt=monthTxs();
+  const bancos=[...new Set(allTxs().map(t=>t.banco).filter(b=>/cart[aã]o/i.test(b||'')))];
+  const compras=bancos.map(b=>({b,v:mt.filter(t=>t.banco===b&&t.valor<0).reduce((s,t)=>s-t.valor,0)})).filter(x=>x.v);
+  const fat=mt.filter(t=>t.valor<0&&/pagamento de fatura|pgto cartao|^pgto\.? cartao/i.test(norm(t.desc)+' '+t.desc.toLowerCase()));
+  const ps=parcelas(); const proxMes=shiftMonth(ym,1);
+  const compromisso=ps.filter(p=>p.fim>=proxMes).reduce((s,p)=>s+p.valor,0);
+  if(!compras.length&&!fat.length&&!ps.length)return '';
+  return `<div class="card"><h2>Cartões</h2>
+    ${compras.map(x=>`<div class="kv"><span>Compras no ${esc(x.b)}</span><span class="num">${fmt(x.v)}</span></div>`).join('')}
+    ${fat.map(t=>`<div class="kv note"><span>Fatura paga ${t.data.slice(8,10)}/${t.data.slice(5,7)} · ${esc(/picpay/i.test(t.desc)?'PicPay':t.banco)}</span><span class="num">${fmt(-t.valor)}</span></div>`).join('')}
+    ${ps.length?`<div class="kv total"><span>Parcelas a partir de ${esc(shortMonth(proxMes))}</span><span class="num">${fmt(compromisso)}/mês</span></div>
+      ${ps.map(p=>`<div class="kv note"><span style="min-width:0">${esc(p.nome)} <span class="muted">${p.cur}/${p.tot}</span></span><span class="num">${p.faltam?`faltam ${p.faltam}× ${fmt(p.valor)} · até ${shortMonth(p.fim)}/${p.fim.slice(2,4)}`:'última parcela'}</span></div>`).join('')}`:''}
+  </div>`;
+}
+
 /* barras: últimos 6 meses, entrou x saiu */
 function vSeisMeses(){
   const ks=[5,4,3,2,1,0].map(n=>shiftMonth(ym,-n));
@@ -591,6 +642,7 @@ function vMes(){
     <div class="card"><h2>Gastos variáveis do mês</h2>${cats||'<p class="empty">Nenhum gasto variável neste mês.</p>'}
       ${fixPago?`<div class="kv note"><span>Contas fixas que apareceram no extrato</span><span class="num">${fmt(fixPago)}</span></div>`:''}</div>
     ${vRosca(c)}
+    ${vCartoes()}
     ${vSeisMeses()}
     <div class="card"><h2>Planejado</h2>
       <div class="kv"><span>Salário</span><span class="num">${fmt(c.sal)}</span></div>
