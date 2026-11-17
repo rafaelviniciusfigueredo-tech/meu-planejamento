@@ -65,7 +65,8 @@ section.view{display:flex;flex-direction:column;gap:14px;padding-bottom:12px}
 .list{display:flex;flex-direction:column}
 .tx{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .tx:last-child{border-bottom:0}
-.tx .d{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.tx .d{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;cursor:pointer}
+.tx .d.open{white-space:normal;overflow-wrap:anywhere}
 .tx .v{font-weight:600;text-align:right}
 .tx .v.in{color:var(--good)}
 .tx .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;grid-column:1/-1}
@@ -252,9 +253,21 @@ function logout(){
   token=null; ls.del('mp_token'); ls.del('mp_cache'); ls.del('mp_consent');
   store=null; fileId=null; remoteMod=null; pending=[]; net={state:'login',msg:''}; render();
 }
+/* ajustes únicos nos dados (rodam uma vez só, marcados em config.migr) */
+function migrar(){
+  const cfg=store?.config; if(!cfg)return;
+  const feitos=cfg.migr||[]; if(feitos.includes('v2'))return;
+  const ops=[], c2=JSON.parse(JSON.stringify(cfg));
+  for(const c of c2.cats||[]) if(norm(c.nome)==='cosmeticos'){c.nome='Estética';for(const k of ['salao','barbearia','estetica','manicure'])if(!(c.chaves||[]).includes(k))(c.chaves=c.chaves||[]).push(k)}
+  for(const [id,t] of Object.entries(store.lanc||{})) if(norm(t.cat)==='cosmeticos')ops.push({t:'upd',id,patch:{cat:'Estética'}});
+  const rid='pd9cdd50d-da81-4214-8348-ceae0723f773';
+  if(!store.lanc[rid])ops.push({t:'set',id:rid,doc:{banco:'PicPay',cat:'Outros',data:'2026-11-15',desc:'PIX enviado · GOPAG SOLUCOES FINANCEIRAS LTDA',mes:'2026-11',origem:'pluggy',valor:-52.45}});
+  c2.migr=[...feitos,'v2']; ops.push({t:'cfg',cfg:c2});
+  mutate(ops,true);
+}
 async function afterLogin(){
   net={state:'busy',msg:'Abrindo seus dados no Drive…'};render();
-  try{await pull();net={state:'ok',msg:''};render();if(pending.length)save();syncBancos(false)}
+  try{await pull();migrar();net={state:'ok',msg:''};render();if(pending.length)save();syncBancos(false)}
   catch(e){net=e.code===401?{state:'login',msg:''}:{state:'err',msg:'Não consegui abrir o Drive ('+(e.message||e.code||'sem internet')+').'};render()}
 }
 
@@ -312,7 +325,7 @@ const PLUGGY_MAP=[
   [/eating out|restaurant|food delivery|fast food|bakery|coffee/i,'Lanches'],
   [/grocer|supermarket|food and drink/i,'Alimentos'],
   [/\bbars?\b|nightlife|entertainment|leisure|tickets|cinema|\bshows?\b/i,'Rolês'],
-  [/beauty|cosmetic|personal care/i,'Cosméticos'],
+  [/beauty|cosmetic|personal care/i,'Estética'],
   [/pharmac|drugstore/i,'Farmácia'],
   [/bank fees|interests charged|tax on financial|late payment|overdraft/i,'Tarifas e juros'],
   [/shopping|online|clothing|electronics/i,'Compras'],
@@ -521,10 +534,9 @@ function vLanc(){
     let last='', rows='';
     for(const t of txs){
       if(t.data!==last){last=t.data;const [y,m,d]=t.data.split('-');rows+=`<div class="day">${d}/${m}</div>`}
-      const del=ui.confirmDel===t.id;
-      rows+=`<div class="tx"><span class="d" title="${esc(t.desc)}">${esc(t.desc)}</span><span class="v num ${t.valor>0?'in':''}">${t.valor>0?'+':''}${fmt(t.valor)}</span>
-        <div class="meta"><select class="mini" data-cat="${t.id}" aria-label="Categoria">${catOptions(t.cat)}</select>${t.banco?`<span class="pill">${esc(t.banco)}</span>`:''}
-        <button class="x ${del?'confirm':''}" data-del="${t.id}">${del?'Confirmar exclusão':'Excluir'}</button></div></div>`;
+      const open=ui.openTx===t.id;
+      rows+=`<div class="tx"><span class="d ${open?'open':''}" data-exp="${t.id}" role="button" tabindex="0" aria-expanded="${open}" title="Toque para ver tudo">${esc(t.desc)}</span><span class="v num ${t.valor>0?'in':''}">${t.valor>0?'+':''}${fmt(t.valor)}</span>
+        <div class="meta"><select class="mini" data-cat="${t.id}" aria-label="Categoria">${catOptions(t.cat)}</select>${t.banco?`<span class="pill">${esc(t.banco)}</span>`:''}</div></div>`;
     }
     body+=`<div class="card"><div class="list">${rows}</div></div>`;
   }
@@ -630,7 +642,7 @@ $('#prevM').onclick=()=>{ym=shiftMonth(ym,-1);render()};
 $('#nextM').onclick=()=>{ym=shiftMonth(ym,1);render()};
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-a],[data-del],[data-dep],[data-ret],[data-tem],[data-frm]'); if(!t)return;
+  const t=e.target.closest('[data-a],[data-exp],[data-dep],[data-ret],[data-tem],[data-frm]'); if(!t)return;
   const a=t.dataset.a, cfg=cfgOf();
   if(a==='login'){login()}
   else if(a==='logout'){logout()}
@@ -642,7 +654,7 @@ document.addEventListener('click',e=>{
   else if(a==='sync'){syncBancos(true)}
   else if(a==='addFixo'){cfg.fixos.push({id:uid(),nome:'Nova conta',valor:0});saveCfg(true);render()}
   else if(a==='addCat'){cfg.cats.push({nome:'Nova categoria',teto:0,chaves:[]});saveCfg(true);render()}
-  else if(t.dataset.del){const id=t.dataset.del;if(ui.confirmDel===id){ui.confirmDel=null;mutate({t:'del',id})}else{ui.confirmDel=id;render()}}
+  else if(t.dataset.exp){ui.openTx=ui.openTx===t.dataset.exp?null:t.dataset.exp;render()}
   else if(t.dataset.dep||t.dataset.ret){const i=+(t.dataset.dep||t.dataset.ret);const v=parseNum($('#dep'+i).value);if(!(v>0)){toast('Digite um valor');return}
     cfg.metas[i].guardado=Math.round(((+cfg.metas[i].guardado||0)+(t.dataset.dep?v:-v))*100)/100;
     (cfg.depositos=cfg.depositos||[]).push({data:new Date().toISOString().slice(0,10),meta:cfg.metas[i].nome,valor:t.dataset.dep?v:-v});
