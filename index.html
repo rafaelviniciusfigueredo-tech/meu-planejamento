@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Meu Planejamento</title>
+<meta name="theme-color" content="#17734F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@500;600;700&display=swap">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{
+  --bg:#F2F4F1; --surface:#FFFFFF; --sunk:#E7EBE6; --ink:#17201C; --muted:#5C6A63; --line:#D5DCD6;
+  --accent:#17734F; --accent-ink:#FFFFFF; --accent-soft:#DCEFE5;
+  --warn:#A86A06; --warn-soft:#F8EBD2; --bad:#B4372B; --bad-soft:#F7DEDA; --good:#17734F;
+  --f-display:"Sora",ui-sans-serif,system-ui,sans-serif; --f-body:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1512; --surface:#18201C; --sunk:#222C27; --ink:#E6EEE9; --muted:#97A69E; --line:#2D3832;
+  --accent:#4CC28F; --accent-ink:#06140D; --accent-soft:#183B2C;
+  --warn:#E3A93E; --warn-soft:#3A2D14; --bad:#F07A6C; --bad-soft:#3C1E1A; --good:#4CC28F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1512; --surface:#18201C; --sunk:#222C27; --ink:#E6EEE9; --muted:#97A69E; --line:#2D3832;
+  --accent:#4CC28F; --accent-ink:#06140D; --accent-soft:#183B2C;
+  --warn:#E3A93E; --warn-soft:#3A2D14; --bad:#F07A6C; --bad-soft:#3C1E1A; --good:#4CC28F; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink);margin:0}
+body{font-family:var(--f-body);font-size:15px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(84px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:560px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
+h1{font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
+h2{font-size:1rem;font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px 10px}
+.month{display:flex;align-items:center;gap:4px}
+.month b{min-width:112px;text-align:center;font-family:var(--f-display);font-weight:600;font-size:.95rem;text-transform:capitalize}
+button{font:inherit;color:inherit;cursor:pointer}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:34px;height:34px;display:grid;place-items:center}
+.btn{border:0;border-radius:11px;padding:10px 14px;background:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.ghost{background:var(--sunk);color:var(--ink)}
+.btn.small{padding:6px 10px;font-size:.85rem;border-radius:9px}
+.btn:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.view{display:flex;flex-direction:column;gap:14px;padding-bottom:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.hero{background:var(--accent);color:var(--accent-ink);border:0}
+.hero .eyebrow{color:inherit;opacity:.8}
+.hero .big{font-family:var(--f-display);font-size:2rem;font-weight:700;letter-spacing:-.02em}
+.hero .row{display:flex;gap:18px;flex-wrap:wrap;font-size:.9rem}
+.kv{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.kv.total{border-top:1px solid var(--line);padding-top:8px;font-weight:600}
+.bar{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:inherit;background:var(--accent)}
+.bar i.warn{background:var(--warn)} .bar i.bad{background:var(--bad)}
+.cat{display:flex;flex-direction:column;gap:5px}
+.pill{font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.good{background:var(--accent-soft);color:var(--good)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)}
+.list{display:flex;flex-direction:column}
+.tx{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.tx:last-child{border-bottom:0}
+.tx .d{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.tx .v{font-weight:600;text-align:right}
+.tx .v.in{color:var(--good)}
+.tx .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;grid-column:1/-1}
+.day{font-size:.78rem;color:var(--muted);font-weight:600;padding-top:8px}
+select,input{font:inherit;color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:7px 9px;min-width:0}
+select.mini{font-size:.78rem;padding:2px 6px;border-radius:7px}
+input.money{width:110px;text-align:right}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form .full{grid-column:1/-1}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.x{border:0;background:none;color:var(--muted);font-size:.8rem;padding:2px 4px}
+.x.confirm{color:var(--bad);font-weight:600}
+.goal{display:flex;flex-direction:column;gap:6px;padding-block:6px}
+.goal .head{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.edit-row{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.edit-row:last-child{border-bottom:0}
+.edit-row input.name{flex:1}
+.toggle{border:1px solid var(--line);background:var(--sunk);border-radius:99px;padding:3px 10px;font-size:.78rem;font-weight:600}
+.toggle.on{background:var(--accent-soft);color:var(--good);border-color:transparent}
+.drop{border:1.5px dashed var(--line);border-radius:12px;padding:16px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.preview{max-height:340px;overflow:auto}
+.note{font-size:.85rem;color:var(--muted)}
+.banner{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:.88rem}
+.statusbar{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px}
+.login{align-items:center;text-align:center;padding:28px 18px;gap:14px}
+.login .logo{width:64px;height:64px;border-radius:16px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:6px max(8px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px))}
+nav.tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.7rem;font-weight:600;color:var(--muted);padding:6px 0;border-radius:10px}
+nav.tabs button svg{width:22px;height:22px}
+nav.tabs button[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:.88rem;z-index:20;max-width:90vw}
+.empty{padding:18px 4px;text-align:center;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .4s ease}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1 id="title">Meu Planejamento</h1>
+    <div class="month" id="monthNav">
+      <button class="icon-btn" id="prevM" aria-label="Mês anterior">‹</button>
+      <b id="monthLabel" class="num">—</b>
+      <button class="icon-btn" id="nextM" aria-label="Próximo mês">›</button>
+    </div>
+  </header>
+  <main id="app"></main>
+</div>
+
+<nav class="tabs" id="tabs">
+  <button data-v="mes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Mês</button>
+  <button data-v="lanc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Lançamentos</button>
+  <button data-v="metas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>Cofrinho</button>
+  <button data-v="casa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg>Casa</button>
+  <button data-v="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Ajustes</button>
+</nav>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const BRL=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const fmt=v=>BRL.format(Number(v)||0);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SPECIAL={IN:'Entrada',FIX:'Conta fixa',MOVE:'Entre contas'};
+const BANKS=['Banco do Brasil','Bradesco','Caixa','Nubank','PicPay','Outro'];
+
+/* ---------- Google / Drive ---------- */
+const CLIENT_ID='253208177186-ds5l7vrduel32nn75b88it2l0j9tb1pl.apps.googleusercontent.com';
+const SCOPE='https://www.googleapis.com/auth/drive';
+const FOLDER='1kxQwdzUKsl27bq03a_VXYN4gEuenlDqb';
+const DATA_NAME='meu-planejamento-dados.json', SYNC_TITLE='pluggy-transacoes.json';
+const API='https://www.googleapis.com/drive/v3/files', UP='https://www.googleapis.com/upload/drive/v3/files';
+
+const ls={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+
+let store=null;            // {versao, config, pluggy, lanc:{id:doc}}
+let fileId=null, remoteMod=null, pending=[];
+let token=null, tokenExp=0, tokenClient=null;
+let net={state:'idle',msg:''};   // idle | busy | ok | err | login
+let sync={state:'idle',msg:'',geradoEm:null};
+let view='mes';
+let ym=(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')})();
+let ui={adding:false, importing:false, preview:null, bank:'Nubank', confirmDel:null, err:''};
+{const v=ls.get('mp_view'); if(v) view=v;}
+{const t=ls.get('mp_token'); if(t&&t.exp>Date.now()+60000){token=t.tok;tokenExp=t.exp}}
+{const c=ls.get('mp_cache'); if(c&&c.store){store=c.store;fileId=c.fileId;remoteMod=c.remoteMod;pending=c.pending||[]}}
+const cfgOf=()=>store?.config||null;
+
+function cacheSave(){ls.set('mp_cache',{store,fileId,remoteMod,pending})}
+
+/* operações: aplicadas aqui e repetidas por cima do arquivo do Drive na hora de salvar */
+function applyOp(s,op){
+  s.lanc=s.lanc||{};
+  if(op.t==='set')s.lanc[op.id]=op.doc;
+  else if(op.t==='upd'){if(s.lanc[op.id])Object.assign(s.lanc[op.id],op.patch)}
+  else if(op.t==='del')delete s.lanc[op.id];
+  else if(op.t==='cfg')s.config=op.cfg;
+  else if(op.t==='plg')s.pluggy=op.meta;
+}
+function mutate(ops,quiet){
+  for(const op of [].concat(ops)){applyOp(store,op);pending.push(JSON.parse(JSON.stringify(op)))}
+  cacheSave(); scheduleSave(); if(!quiet)render();
+}
+
+async function gfetch(url,opt={}){
+  if(!token||tokenExp<Date.now()+30000){token=null;throw {code:401}}
+  const r=await fetch(url,{...opt,headers:{...(opt.headers||{}),Authorization:'Bearer '+token}});
+  if(r.status===401){token=null;ls.del('mp_token');throw {code:401}}
+  if(!r.ok){let m='';try{m=(await r.json()).error.message}catch(e){}throw {code:r.status,message:m||('erro '+r.status)}}
+  return r;
+}
+async function findFile(name){
+  const q=encodeURIComponent(`name = '${name}' and '${FOLDER}' in parents and trashed = false`);
+  const r=await gfetch(`${API}?q=${q}&orderBy=modifiedTime desc&pageSize=1&fields=files(id,modifiedTime)`);
+  return (await r.json()).files?.[0]||null;
+}
+async function download(id){const r=await gfetch(`${API}/${id}?alt=media`);return JSON.parse((await r.text()).replace(/^﻿/,''))}
+
+/* traz o arquivo do Drive e repete por cima as mudanças ainda não salvas */
+async function pull(){
+  let meta=null;
+  if(fileId){try{meta=await (await gfetch(`${API}/${fileId}?fields=id,modifiedTime,trashed`)).json();if(meta.trashed)meta=null}catch(e){if(e.code===401)throw e;meta=null}}
+  if(!meta){meta=await findFile(DATA_NAME);}
+  if(!meta){ // primeira vez sem arquivo: cria a partir do que tiver aqui
+    if(!store)store={versao:1,config:null,pluggy:{ids:[]},lanc:{}};
+    fileId=null; return;
+  }
+  if(meta.id===fileId&&meta.modifiedTime===remoteMod&&store)return;
+  const remote=await download(meta.id);
+  for(const op of pending)applyOp(remote,op);
+  store=remote; fileId=meta.id; remoteMod=meta.modifiedTime; cacheSave();
+}
+let saving=null, saveTimer=null;
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>save(),700)}
+async function save(){
+  if(saving){saving.then(()=>pending.length&&scheduleSave());return}
+  if(!pending.length)return;
+  if(!token){net={state:'login',msg:''};render();return}
+  saving=(async()=>{
+    const n=pending.length;
+    net={state:'busy',msg:'Salvando no Drive…'};render();
+    try{
+      await pull();
+      store.atualizadoEm=new Date().toISOString();
+      const body=JSON.stringify(store);
+      let r;
+      if(fileId){r=await gfetch(`${UP}/${fileId}?uploadType=media&fields=id,modifiedTime`,{method:'PATCH',headers:{'Content-Type':'application/json'},body})}
+      else{
+        const b='mpb'+Date.now();
+        const mp=`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name:DATA_NAME,parents:[FOLDER],mimeType:'application/json'})}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${b}--`;
+        r=await gfetch(`${UP}?uploadType=multipart&fields=id,modifiedTime`,{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body:mp});
+      }
+      const m=await r.json(); fileId=m.id; remoteMod=m.modifiedTime;
+      pending=pending.slice(n); cacheSave();
+      net={state:'ok',msg:''};
+    }catch(e){
+      net=e.code===401?{state:'login',msg:''}:{state:'err',msg:'Não salvou no Drive ('+(e.message||e.code||'sem internet')+'). Fica guardado aqui e tento de novo.'};
+    }
+    render();
+  })();
+  await saving; saving=null;
+  if(pending.length&&net.state==='ok')scheduleSave();
+}
+
+/* login com Google */
+function initAuth(){
+  if(tokenClient||!window.google?.accounts?.oauth2)return !!tokenClient;
+  tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPE,
+    callback:r=>{
+      if(r.error){net={state:'login',msg:'Login não concluído.'};render();return}
+      token=r.access_token; tokenExp=Date.now()+(+r.expires_in||3600)*1000;
+      ls.set('mp_token',{tok:token,exp:tokenExp}); ls.set('mp_consent',true);
+      afterLogin();
+    },
+    error_callback:()=>{net={state:'login',msg:'A janela de login foi fechada.'};render()}});
+  return true;
+}
+function login(){
+  if(!initAuth()){toast('Carregando o Google… tente de novo em 2 segundos');return}
+  tokenClient.requestAccessToken({prompt:ls.get('mp_consent')?'':'consent'});
+}
+function logout(){
+  if(token&&window.google?.accounts?.oauth2)google.accounts.oauth2.revoke(token,()=>{});
+  token=null; ls.del('mp_token'); ls.del('mp_cache'); ls.del('mp_consent');
+  store=null; fileId=null; remoteMod=null; pending=[]; net={state:'login',msg:''}; render();
+}
+async function afterLogin(){
+  net={state:'busy',msg:'Abrindo seus dados no Drive…'};render();
+  try{await pull();net={state:'ok',msg:''};render();if(pending.length)save();syncBancos(false)}
+  catch(e){net=e.code===401?{state:'login',msg:''}:{state:'err',msg:'Não consegui abrir o Drive ('+(e.message||e.code||'sem internet')+').'};render()}
+}
+
+/* ---------- helpers ---------- */
+function monthName(k){const [y,m]=k.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}
+function shiftMonth(k,n){let [y,m]=k.split('-').map(Number);m+=n;while(m<1){m+=12;y--}while(m>12){m-=12;y++}return y+'-'+String(m).padStart(2,'0')}
+function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[0-9*#\/\-.,:]+/g,' ').replace(/\s+/g,' ').trim()}
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+function parseNum(s){
+  if(typeof s==='number')return s;
+  s=String(s||'').replace(/R\$|\s| /g,'');
+  if(!s)return NaN;
+  let neg=false;
+  if(/^\(.*\)$/.test(s)){neg=true;s=s.slice(1,-1)}
+  if(/-$/.test(s)){neg=true;s=s.slice(0,-1)}
+  const lc=s.lastIndexOf(','), ld=s.lastIndexOf('.');
+  if(lc>-1&&ld>-1){ s = lc>ld ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,'') }
+  else if(lc>-1){ s=s.replace(/\./g,'').replace(',','.') }
+  const n=parseFloat(s); return neg?-n:n;
+}
+function parseDate(s){
+  s=String(s||'').trim();
+  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m)return `${m[1]}-${m[2]}-${m[3]}`;
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/); if(m){let y=m[3].length===2?'20'+m[3]:m[3];return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`}
+  m=s.match(/^(\d{4})(\d{2})(\d{2})/); if(m)return `${m[1]}-${m[2]}-${m[3]}`;
+  return null;
+}
+function monthTxs(){
+  if(!store)return [];
+  const out=[];for(const id in store.lanc){const t=store.lanc[id];if(t&&t.mes===ym)out.push({id,...t})}
+  return out.sort((a,b)=>b.data.localeCompare(a.data));
+}
+
+/* ---------- categorização ---------- */
+function kw(n,w){const nw=norm(w);if(!nw)return false;const h=' '+n+' ';return nw.length<=3?h.includes(' '+nw+' '):h.includes(' '+nw)}
+const MOVE_WORDS=['recarga em carteira via cartao','retirada de saldo','transferencia entre contas','pagamento de fatura','pagamento fatura','pgto fatura','aplicacao','resgate','rdb','cofrinho','caixinha','saldo anterior'];
+function categorize(desc,valor){
+  const cfg=cfgOf(), n=norm(desc);
+  if(cfg&&cfg.regras){for(const k in cfg.regras){if(k&&n.includes(k))return cfg.regras[k]}}
+  if(MOVE_WORDS.some(w=>n.includes(w)))return SPECIAL.MOVE;
+  if(valor>0)return SPECIAL.IN;
+  if(cfg){
+    if(isFixo(n))return SPECIAL.FIX;
+    for(const c of cfg.cats||[]){for(const w of c.chaves||[]){if(kw(n,w))return c.nome}}
+    const outros=(cfg.cats||[]).find(c=>norm(c.nome)==='outros'); if(outros)return outros.nome;
+  }
+  return 'Outros';
+}
+const PLUGGY_MOVE=/same person transfer|credit card payment|automatic investment|proceeds interests|investment|transfer - cash/i;
+const PLUGGY_MAP=[
+  [/gas station|fuel|parking|toll|automotive/i,'Gasolina'],
+  [/taxi|ride-hailing|ride hailing|transport/i,'Uber'],
+  [/eating out|restaurant|food delivery|fast food|bakery|coffee/i,'Lanches'],
+  [/grocer|supermarket|food and drink/i,'Alimentos'],
+  [/\bbars?\b|nightlife|entertainment|leisure|tickets|cinema|\bshows?\b/i,'Rolês'],
+  [/beauty|cosmetic|personal care/i,'Cosméticos'],
+  [/pharmac|drugstore/i,'Farmácia'],
+  [/bank fees|interests charged|tax on financial|late payment|overdraft/i,'Tarifas e juros'],
+  [/shopping|online|clothing|electronics/i,'Compras'],
+];
+function isFixo(n){for(const f of cfgOf()?.fixos||[]){const fn=norm(f.nome);if(fn.length>=4&&n.includes(fn))return true;for(const w of f.chaves||[]){if(kw(n,w))return true}}return false}
+const EMPRESA=/\b(ltda|s\/?a|s\.a\.?|me|eireli|epp|servicos|serviços|comercio|comércio|pagamentos|bank|banco|instituicao|instituição|empreendimentos|participacoes|participações|intermediacao|intermediações|intermediacoes|solucoes|soluções|marketplace|drogaria|farmac|varejo|food)\b/i;
+function isPixPessoa(desc){const m=String(desc||'').match(/^pix enviado\s*·\s*(.+)$/i);if(!m)return false;const r=m[1].trim();if(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(r))return true;return !EMPRESA.test(r)}
+function catName(n){const c=(cfgOf()?.cats||[]).find(x=>norm(x.nome)===norm(n));return c?c.nome:null}
+function categorizePluggy(t){
+  const cfg=cfgOf(), n=norm(t.desc), cp=String(t.categoriaPluggy||'');
+  if(cfg&&cfg.regras){for(const k in cfg.regras){if(k&&n.includes(k))return cfg.regras[k]}}
+  if(PLUGGY_MOVE.test(cp)||MOVE_WORDS.some(w=>n.includes(w)))return SPECIAL.MOVE;
+  if(t.valor>0)return SPECIAL.IN;
+  if(isFixo(n))return SPECIAL.FIX;
+  if(/real estate financing|financing/i.test(cp)&&/prestacao|hab/i.test(n))return SPECIAL.FIX;
+  for(const c of cfg?.cats||[]){for(const w of c.chaves||[]){if(kw(n,w))return c.nome}}
+  for(const [re,nome] of PLUGGY_MAP){if(re.test(cp)){const c=catName(nome);if(c)return c}}
+  if(isPixPessoa(t.desc)){const c=catName('Pix para pessoas');if(c)return c}
+  return catName('Outros')||'Outros';
+}
+function catOptions(sel){
+  const names=[...(cfgOf()?.cats||[]).map(c=>c.nome),SPECIAL.FIX,SPECIAL.IN,SPECIAL.MOVE];
+  if(sel&&!names.includes(sel))names.push(sel);
+  return names.map(n=>`<option${n===sel?' selected':''}>${esc(n)}</option>`).join('');
+}
+
+/* ---------- importar extrato (OFX/CSV) ---------- */
+async function readText(file){
+  const buf=await file.arrayBuffer();
+  try{return new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch(e){return new TextDecoder('windows-1252').decode(buf)}
+}
+function parseOFX(text){
+  const out=[];
+  for(const part of text.split(/<STMTTRN>/i).slice(1)){
+    const b=part.split(/<\/STMTTRN>/i)[0];
+    const g=t=>{const m=b.match(new RegExp('<'+t+'>([^<\\r\\n]*)','i'));return m?m[1].trim():''};
+    const data=parseDate(g('DTPOSTED')); const valor=parseNum(g('TRNAMT'));
+    if(!data||isNaN(valor))continue;
+    const desc=[g('NAME'),g('MEMO')].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(' · ')||g('TRNTYPE');
+    out.push({data,valor,desc:desc.replace(/\s+/g,' '),ref:g('FITID')});
+  }
+  return out;
+}
+function splitCSV(line,d){const r=[];let cur='',q=false;for(let i=0;i<line.length;i++){const c=line[i];if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}else if(c==='"')q=true;else if(c===d){r.push(cur);cur=''}else cur+=c}r.push(cur);return r.map(s=>s.trim())}
+function parseCSV(text){
+  const lines=text.replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim());
+  let hi=lines.findIndex(l=>/(^|[;,"\s])(data|date)([;,"\s]|$)/i.test(l));
+  if(hi<0)throw new Error('Não achei a linha de cabeçalho (com a coluna "Data") no CSV.');
+  const d=(lines[hi].split(';').length>=lines[hi].split(',').length)?';':',';
+  const H=splitCSV(lines[hi],d).map(h=>norm(h));
+  const find=(...keys)=>H.findIndex(h=>keys.some(k=>h===k||h.startsWith(k)));
+  const iD=find('data','date'), iV=find('valor','amount','value'), iCr=find('credito'), iDb=find('debito');
+  const iDesc=find('descricao','title','historico','lancamento','estabelecimento','detalhes','description');
+  const iDet=H.findIndex((h,i)=>i!==iDesc&&(h.startsWith('detalhes')||h.startsWith('descricao')));
+  const iId=find('identificador','id','n documento','docto','documento');
+  const iTipo=find('tipo lancamento','tipo');
+  const isCard=H.includes('title')&&H.includes('amount');
+  if(iD<0||(iV<0&&iCr<0&&iDb<0))throw new Error('O CSV precisa ter colunas de data e valor.');
+  const out=[];
+  for(const l of lines.slice(hi+1)){
+    const c=splitCSV(l,d); const data=parseDate(c[iD]); if(!data)continue;
+    let valor = iV>=0 ? parseNum(c[iV]) : ((iCr>=0?parseNum(c[iCr])||0:0)-(iDb>=0?Math.abs(parseNum(c[iDb]))||0:0));
+    if(isNaN(valor)||valor===0)continue;
+    if(isCard)valor=-valor;
+    if(iTipo>=0&&valor>0&&/said|debit/i.test(norm(c[iTipo])))valor=-valor;
+    let desc=(c[iDesc]||'')+(iDet>=0&&c[iDet]?' · '+c[iDet]:'');
+    if(/^s ?a ?l ?d ?o/i.test(norm(desc)))continue;
+    out.push({data,valor,desc:desc.replace(/\s+/g,' ').trim()||'Sem descrição',ref:iId>=0?c[iId]:''});
+  }
+  return out;
+}
+async function handleFile(file){
+  ui.err='';
+  try{
+    const text=await readText(file);
+    let rows=/<OFX>|OFXHEADER|<STMTTRN>/i.test(text)?parseOFX(text):(/\.pdf$/i.test(file.name)?null:parseCSV(text));
+    if(rows===null)throw new Error('PDF não dá para ler aqui. Exporte o extrato em OFX ou CSV.');
+    if(!rows.length)throw new Error('Não encontrei lançamentos nesse arquivo.');
+    const seen={};
+    rows=rows.map(r=>{
+      const base=ui.bank+'|'+(r.ref?r.ref+'|'+r.data+'|'+r.valor:r.data+'|'+r.valor+'|'+norm(r.desc));
+      seen[base]=(seen[base]||0)+1;
+      return {...r,id:'t'+hash(base+'#'+seen[base]),cat:categorize(r.desc,r.valor),keep:true};
+    });
+    rows.forEach(r=>{if(store.lanc[r.id])r.keep=false,r.dup=true});
+    ui.preview={file:file.name,rows};
+  }catch(e){ui.err=e.message||String(e);ui.preview=null}
+  render();
+}
+function commitImport(){
+  const rows=ui.preview.rows.filter(r=>r.keep);
+  mutate(rows.map(r=>({t:'set',id:r.id,doc:{data:r.data,mes:r.data.slice(0,7),desc:r.desc,valor:Math.round(r.valor*100)/100,cat:r.cat,banco:ui.bank,origem:'extrato'}})),true);
+  const months=[...new Set(rows.map(r=>r.data.slice(0,7)))].sort();
+  ui.preview=null; ui.importing=false;
+  toast(`${rows.length} lançamentos importados`);
+  if(months.length&&!months.includes(ym))ym=months[months.length-1];
+  render();
+}
+
+/* ---------- bancos (Pluggy -> rotina diária -> Drive -> app) ---------- */
+async function syncBancos(manual){
+  if(!store||!cfgOf()||sync.state==='busy')return;
+  if(!token){if(manual)login();return}
+  sync={...sync,state:'busy',msg:'Buscando seus bancos…'};render();
+  try{
+    const f=await findFile(SYNC_TITLE);
+    if(!f){sync={state:'idle',msg:'Ainda não há transações dos bancos no Drive.'};render();return}
+    const meta=store.pluggy||{ids:[]};
+    if(!manual&&meta.arquivo===f.id+'|'+f.modifiedTime){sync={state:'ok',msg:'',geradoEm:meta.geradoEm};render();return}
+    const data=await download(f.id);
+    const seen=new Set(meta.ids||[]);
+    const novos=(data.transacoes||[]).filter(t=>t&&t.id&&!seen.has(t.id)&&!store.lanc['p'+t.id]);
+    const ops=novos.map(t=>{
+      const banco=({'BANCO DO BRASIL':'Banco do Brasil','CAIXA':'Caixa','PICPAY':'PicPay','NUBANK':'Nubank','BRADESCO':'Bradesco'})[String(t.banco).toUpperCase()]||t.banco;
+      const tx={data:t.data,mes:t.data.slice(0,7),desc:t.desc||'Sem descrição',valor:Math.round(t.valor*100)/100,banco:banco+(t.conta==='cartao'?' cartão':''),origem:'pluggy'};
+      tx.cat=categorizePluggy({...t,desc:tx.desc,valor:tx.valor});
+      seen.add(t.id);
+      return {t:'set',id:'p'+t.id,doc:tx};
+    });
+    (data.transacoes||[]).forEach(t=>t&&t.id&&seen.add(t.id));
+    let ids=[...seen]; if(ids.length>6000)ids=ids.slice(-6000);
+    ops.push({t:'plg',meta:{arquivo:f.id+'|'+f.modifiedTime,geradoEm:data.geradoEm||null,ids}});
+    mutate(ops,true);
+    sync={state:'ok',msg:'',geradoEm:data.geradoEm};
+    if(novos.length)toast(`${novos.length} lançamentos novos dos seus bancos`);
+  }catch(e){
+    sync=e.code===401?{state:'idle',msg:''}:{state:'err',msg:'Não consegui trazer os bancos ('+(e.message||e.code||'sem internet')+').'};
+    if(e.code===401)net={state:'login',msg:''};
+  }
+  render();
+}
+
+/* linha de status: login, salvamento e bancos */
+function statusLine(){
+  if(!token||net.state==='login')return `<div class="card statusbar"><span class="note">Entre com o Google para salvar e trazer os bancos.${pending.length?` ${pending.length} mudança(s) esperando.`:''}</span><button class="btn small" data-a="login">Entrar</button></div>`;
+  const quando=(sync.geradoEm||store?.pluggy?.geradoEm)?new Date(sync.geradoEm||store.pluggy.geradoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):null;
+  let txt;
+  if(net.state==='busy')txt=net.msg;
+  else if(net.state==='err')txt='⚠ '+net.msg;
+  else if(sync.state==='busy'||sync.state==='err'||sync.msg)txt=(sync.state==='err'?'⚠ ':'')+sync.msg;
+  else txt=quando?`Bancos atualizados em ${quando} · salvo no Drive`:'Salvo no Drive';
+  return `<div class="card statusbar"><span class="note" style="min-width:0">${esc(txt)}</span>
+    <button class="btn small ghost" data-a="sync" ${sync.state==='busy'?'disabled':''}>Atualizar bancos</button></div>`;
+}
+
+/* ---------- config ---------- */
+let cfgTimer=null;
+function saveCfg(now){
+  clearTimeout(cfgTimer);
+  const go=()=>mutate({t:'cfg',cfg:JSON.parse(JSON.stringify(store.config))},true);
+  if(now)go(); else cfgTimer=setTimeout(go,500);
+}
+
+/* ---------- cálculos ---------- */
+function calc(txs){
+  const cfg=cfgOf();
+  const fixos=(cfg.fixos||[]).reduce((s,f)=>s+(+f.valor||0),0);
+  const tetos=(cfg.cats||[]).reduce((s,c)=>s+(+c.teto||0),0);
+  const sal=+cfg.salario||0;
+  const prevista=sal-fixos-tetos;
+  const valid=txs.filter(t=>t.cat!==SPECIAL.MOVE);
+  const entradas=valid.filter(t=>t.valor>0).reduce((s,t)=>s+t.valor,0);
+  const saidas=valid.filter(t=>t.valor<0).reduce((s,t)=>s-t.valor,0);
+  const porCat={}; valid.filter(t=>t.valor<0).forEach(t=>porCat[t.cat]=(porCat[t.cat]||0)-t.valor);
+  return {fixos,tetos,sal,prevista,entradas,saidas,porCat,real:(entradas||sal)-saidas,usouSal:!entradas};
+}
+
+/* ---------- telas ---------- */
+function vMes(){
+  const cfg=cfgOf(), c=calc(monthTxs());
+  const cats=(cfg.cats||[]).map(cat=>{
+    const g=c.porCat[cat.nome]||0, t=+cat.teto||0;
+    if(!t){ if(!g)return ''; return `<div class="cat"><div class="kv"><span>${esc(cat.nome)}</span><span class="num">${fmt(g)} <span class="muted">· sem limite</span></span></div></div>` }
+    const p=g/t, st=p>1?'bad':p>.8?'warn':'good';
+    return `<div class="cat"><div class="kv"><span>${esc(cat.nome)}</span><span class="num">${fmt(g)} <span class="muted">/ ${fmt(t)}</span></span></div>
+      <div class="bar"><i class="${st==='good'?'':st}" style="width:${Math.min(100,p*100)}%"></i></div></div>`}).join('');
+  const fixPago=c.porCat[SPECIAL.FIX]||0;
+  return `<section class="view">${statusLine()}
+    <div class="card hero"><span class="eyebrow">Sobrou em ${esc(monthName(ym))}</span>
+      <span class="big num">${fmt(c.real)}</span>
+      <div class="row num"><span>Entrou ${fmt(c.usouSal?c.sal:c.entradas)}${c.usouSal?' (salário previsto)':''}</span><span>Saiu ${fmt(c.saidas)}</span></div></div>
+    <div class="card"><h2>Gastos variáveis do mês</h2>${cats||'<p class="empty">Nenhum gasto variável neste mês.</p>'}
+      ${fixPago?`<div class="kv note"><span>Contas fixas que apareceram no extrato</span><span class="num">${fmt(fixPago)}</span></div>`:''}</div>
+    <div class="card"><h2>Planejado</h2>
+      <div class="kv"><span>Salário</span><span class="num">${fmt(c.sal)}</span></div>
+      <div class="kv"><span>Custos fixos</span><span class="num">− ${fmt(c.fixos)}</span></div>
+      <div class="kv"><span>Teto dos variáveis</span><span class="num">− ${fmt(c.tetos)}</span></div>
+      <div class="kv total"><span>Sobra prevista</span><span class="num">${fmt(c.prevista)}</span></div></div>
+  </section>`;
+}
+function vLanc(){
+  const txs=monthTxs();
+  let body='';
+  if(ui.importing) body+=vImport();
+  else if(ui.adding) body+=`<div class="card"><h2>Novo lançamento</h2><form class="form" id="addForm">
+      <label class="full">Descrição<input id="fDesc" required placeholder="Ex.: Posto Shell"></label>
+      <label>Valor (R$)<input id="fVal" inputmode="decimal" required placeholder="45,90"></label>
+      <label>Tipo<select id="fTipo"><option value="-1">Saída</option><option value="1">Entrada</option></select></label>
+      <label>Data<input id="fData" type="date" value="${new Date().toISOString().slice(0,10)}"></label>
+      <label>Categoria<select id="fCat">${catOptions('')}</select></label>
+      <label class="full">Banco<select id="fBank">${BANKS.map(b=>`<option>${b}</option>`).join('')}</select></label>
+      <div class="actions full"><button class="btn" type="submit">Salvar</button><button class="btn ghost" type="button" data-a="cancelAdd">Cancelar</button></div></form></div>`;
+  else body+=statusLine()+`<div class="actions"><button class="btn" data-a="add">+ Lançamento</button><button class="btn ghost" data-a="import">Importar extrato</button></div>`;
+  if(!txs.length) body+=`<div class="card"><p class="empty">Nenhum lançamento em ${esc(monthName(ym))}.</p></div>`;
+  else{
+    let last='', rows='';
+    for(const t of txs){
+      if(t.data!==last){last=t.data;const [y,m,d]=t.data.split('-');rows+=`<div class="day">${d}/${m}</div>`}
+      const del=ui.confirmDel===t.id;
+      rows+=`<div class="tx"><span class="d" title="${esc(t.desc)}">${esc(t.desc)}</span><span class="v num ${t.valor>0?'in':''}">${t.valor>0?'+':''}${fmt(t.valor)}</span>
+        <div class="meta"><select class="mini" data-cat="${t.id}" aria-label="Categoria">${catOptions(t.cat)}</select>${t.banco?`<span class="pill">${esc(t.banco)}</span>`:''}
+        <button class="x ${del?'confirm':''}" data-del="${t.id}">${del?'Confirmar exclusão':'Excluir'}</button></div></div>`;
+    }
+    body+=`<div class="card"><div class="list">${rows}</div></div>`;
+  }
+  return `<section class="view">${body}</section>`;
+}
+function vImport(){
+  if(ui.preview){
+    const rows=ui.preview.rows, n=rows.filter(r=>r.keep).length, dups=rows.filter(r=>r.dup).length;
+    return `<div class="card"><h2>Conferir ${rows.length} lançamentos</h2>
+      <p class="note">${esc(ui.preview.file)} · ${esc(ui.bank)}${dups?` · ${dups} já estavam no app e ficaram desmarcados`:''}. Ajuste as categorias antes de importar.</p>
+      <div class="preview list">${rows.map((r,i)=>`<div class="tx"><span class="d"><input type="checkbox" data-keep="${i}" ${r.keep?'checked':''} aria-label="Importar"> ${esc(r.desc)}</span>
+        <span class="v num ${r.valor>0?'in':''}">${fmt(r.valor)}</span><div class="meta"><span class="pill num">${r.data.split('-').reverse().join('/')}</span>
+        <select class="mini" data-pcat="${i}">${catOptions(r.cat)}</select></div></div>`).join('')}</div>
+      <div class="actions"><button class="btn" id="doImport" data-a="commit" ${n?'':'disabled'}>Importar ${n}</button><button class="btn ghost" data-a="cancelImport">Cancelar</button></div></div>`;
+  }
+  return `<div class="card"><h2>Importar extrato</h2>
+    <label class="note">Banco<br><select id="bankSel">${BANKS.map(b=>`<option${b===ui.bank?' selected':''}>${b}</option>`).join('')}</select></label>
+    <div class="drop"><span>Arquivo <b>OFX</b> ou <b>CSV</b> do extrato ou da fatura</span>
+      <input type="file" id="fileIn" accept=".ofx,.csv,.txt,.OFX,.CSV"></div>
+    ${ui.err?`<div class="banner">${esc(ui.err)}</div>`:''}
+    <div class="actions"><button class="btn ghost" data-a="cancelImport">Voltar</button></div></div>`;
+}
+function vMetas(){
+  const cfg=cfgOf(), c=calc(monthTxs());
+  const tg=(cfg.metas||[]).reduce((s,m)=>s+(+m.guardado||0),0), tm=(cfg.metas||[]).reduce((s,m)=>s+(+m.meta||0),0);
+  const metas=(cfg.metas||[]).map((m,i)=>{const p=m.meta?Math.min(1,m.guardado/m.meta):0;return `<div class="goal">
+    <div class="head"><b>${esc(m.nome)}</b><span class="pill ${p>=1?'good':''} num">${Math.round(p*100)}%</span></div>
+    <div class="bar"><i style="width:${p*100}%"></i></div>
+    <div class="kv note num"><span>${fmt(m.guardado)} de ${fmt(m.meta)}</span><span>falta ${fmt(Math.max(0,m.meta-m.guardado))}</span></div>
+    <div class="actions"><input class="money" inputmode="decimal" placeholder="R$" id="dep${i}" aria-label="Valor para ${esc(m.nome)}"><button class="btn small" data-dep="${i}">Guardar</button><button class="btn small ghost" data-ret="${i}">Retirar</button></div></div>`}).join('');
+  const div=(cfg.divisao||[]).map(d=>`<div class="kv"><span>${esc(d.nome)} <span class="muted num">${Math.round(d.pct*100)}%</span></span><span class="num">${fmt(c.prevista*d.pct)}</span></div>`).join('');
+  const sp=(cfg.divisao||[]).reduce((s,d)=>s+d.pct,0);
+  return `<section class="view">
+    <div class="card hero"><span class="eyebrow">Cofrinho dos sonhos</span><span class="big num">${fmt(tg)}</span><div class="row num"><span>Meta total ${fmt(tm)}</span></div></div>
+    <div class="card">${metas||'<p class="empty">Nenhuma meta ainda.</p>'}</div>
+    <div class="card"><h2>Divisão da sobra (${fmt(c.prevista)}/mês)</h2>${div}
+      ${Math.abs(sp-1)>.001?`<div class="banner">As porcentagens somam ${Math.round(sp*100)}%. Ajuste em Ajustes.</div>`:''}</div>
+  </section>`;
+}
+function vCasa(){
+  const cfg=cfgOf();
+  const mv=cfg.moveis||[]; const falta=mv.filter(m=>!m.tenho).reduce((s,m)=>s+(+m.preco||0),0);
+  const contas=cfg.casa||[]; const tc=contas.reduce((s,m)=>s+(+m.valor||0),0);
+  const order={ALTO:0,'MÉDIO':1,BAIXO:2};
+  const rows=mv.map((m,i)=>({m,i})).sort((a,b)=>(a.m.tenho-b.m.tenho)||((order[a.m.prio]??3)-(order[b.m.prio]??3))).map(({m,i})=>`
+    <div class="edit-row"><button class="toggle ${m.tenho?'on':''}" data-tem="${i}">${m.tenho?'Tenho':'Falta'}</button>
+      <span style="flex:1;min-width:0">${esc(m.nome)}</span>
+      <span class="pill ${m.prio==='ALTO'?'bad':m.prio==='MÉDIO'?'warn':''}">${esc((m.prio||'').toLowerCase())}</span>
+      <input class="money num" inputmode="decimal" data-preco="${i}" value="${m.tenho?'':(+m.preco||0).toFixed(2).replace('.',',')}" ${m.tenho?'disabled':''} aria-label="Preço de ${esc(m.nome)}"></div>`).join('');
+  return `<section class="view">
+    <div class="card hero"><span class="eyebrow">Morar sozinho</span><span class="big num">${fmt(falta)}</span><div class="row num"><span>em móveis que faltam</span><span>${fmt(tc)}/mês de contas</span></div></div>
+    <div class="card"><h2>Móveis</h2>${rows||'<p class="empty">Nenhum item.</p>'}
+      <form class="actions" id="addMovel"><input id="mvNome" class="name" placeholder="Novo item" style="flex:1" required><select id="mvPrio"><option>ALTO</option><option selected>MÉDIO</option><option>BAIXO</option></select><button class="btn small">Adicionar</button></form></div>
+    <div class="card"><h2>Contas previstas da casa</h2>
+      ${contas.map((m,i)=>`<div class="kv"><span>${esc(m.nome)}</span><input class="money num" inputmode="decimal" data-casa="${i}" value="${(+m.valor||0).toFixed(2).replace('.',',')}" aria-label="${esc(m.nome)}"></div>`).join('')}
+      <div class="kv total"><span>Total por mês</span><span class="num">${fmt(tc)}</span></div></div>
+  </section>`;
+}
+function vAjustes(){
+  const cfg=cfgOf(), money=v=>(+v||0).toFixed(2).replace('.',',');
+  return `<section class="view">
+    <div class="card"><h2>Salário</h2><div class="kv"><span>Ganho mensal</span><input class="money num" inputmode="decimal" data-set="salario" value="${money(cfg.salario)}"></div></div>
+    <div class="card"><h2>Custos fixos</h2>
+      ${(cfg.fixos||[]).map((f,i)=>`<div class="edit-row"><input class="name" data-fn="${i}" value="${esc(f.nome)}" aria-label="Nome"><input class="money num" inputmode="decimal" data-fv="${i}" value="${money(f.valor)}" aria-label="Valor"><button class="x" data-frm="${i}" aria-label="Remover">✕</button></div>`).join('')}
+      <div class="actions"><button class="btn small ghost" data-a="addFixo">+ Conta fixa</button></div>
+      <div class="kv total"><span>Total</span><span class="num">${fmt((cfg.fixos||[]).reduce((s,f)=>s+(+f.valor||0),0))}</span></div></div>
+    <div class="card"><h2>Tetos dos gastos variáveis</h2><p class="note">Palavras-chave separadas por vírgula ajudam a categorizar sozinho.</p>
+      ${(cfg.cats||[]).map((c,i)=>`<div class="edit-row" style="flex-wrap:wrap"><input class="name" data-cn="${i}" value="${esc(c.nome)}" aria-label="Categoria"><input class="money num" inputmode="decimal" data-ct="${i}" value="${money(c.teto)}" aria-label="Teto"><input data-ck="${i}" value="${esc((c.chaves||[]).join(', '))}" placeholder="palavras-chave" style="flex-basis:100%" aria-label="Palavras-chave"></div>`).join('')}
+      <div class="actions"><button class="btn small ghost" data-a="addCat">+ Categoria</button></div></div>
+    <div class="card"><h2>Divisão da sobra</h2>
+      ${(cfg.divisao||[]).map((d,i)=>`<div class="edit-row"><input class="name" data-dn="${i}" value="${esc(d.nome)}"><input class="money num" inputmode="decimal" data-dp="${i}" value="${Math.round(d.pct*100)}" aria-label="Porcentagem"><span class="muted">%</span></div>`).join('')}</div>
+    <div class="card"><h2>Conta</h2><p class="note">Seus dados ficam no arquivo <b>${DATA_NAME}</b>, na pasta MeuPlanejamento do seu Google Drive.</p>
+      <div class="actions"><button class="btn small ghost" data-a="logout">Sair da conta Google</button></div></div>
+  </section>`;
+}
+function vLogin(){
+  return `<section class="view"><div class="card login">
+    <img class="logo" src="icon.svg" alt="">
+    <h2>Meu Planejamento</h2>
+    <p class="note">Entre com a sua conta Google. Seus dados ficam no seu Drive.</p>
+    ${net.msg?`<div class="banner">${esc(net.msg)}</div>`:''}
+    <button class="btn" data-a="login" ${net.state==='busy'?'disabled':''}>${net.state==='busy'?esc(net.msg):'Entrar com Google'}</button>
+  </div></section>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.v===view?'page':'false'));
+  $('#monthLabel').textContent=monthName(ym);
+  const ready=!!(store&&store.config);
+  $('#monthNav').style.visibility=ready&&(view==='mes'||view==='lanc')?'visible':'hidden';
+  $('#tabs').style.display=ready?'':'none';
+  const app=$('#app');
+  if(!ready){app.innerHTML=vLogin();return}
+  const ae=document.activeElement, aid=ae&&ae.id;
+  app.innerHTML=({mes:vMes,lanc:vLanc,metas:vMetas,casa:vCasa,ajustes:vAjustes}[view]||vMes)();
+  if(aid&&document.getElementById(aid))document.getElementById(aid).focus();
+}
+
+/* ---------- eventos ---------- */
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;view=b.dataset.v;ui.confirmDel=null;ls.set('mp_view',view);render();scrollTo(0,0)});
+$('#prevM').onclick=()=>{ym=shiftMonth(ym,-1);render()};
+$('#nextM').onclick=()=>{ym=shiftMonth(ym,1);render()};
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-a],[data-del],[data-dep],[data-ret],[data-tem],[data-frm]'); if(!t)return;
+  const a=t.dataset.a, cfg=cfgOf();
+  if(a==='login'){login()}
+  else if(a==='logout'){logout()}
+  else if(a==='add'){ui.adding=true;render();$('#fDesc')?.focus()}
+  else if(a==='cancelAdd'){ui.adding=false;render()}
+  else if(a==='import'){ui.importing=true;ui.err='';render()}
+  else if(a==='cancelImport'){ui.importing=false;ui.preview=null;ui.err='';render()}
+  else if(a==='commit'){commitImport()}
+  else if(a==='sync'){syncBancos(true)}
+  else if(a==='addFixo'){cfg.fixos.push({id:uid(),nome:'Nova conta',valor:0});saveCfg(true);render()}
+  else if(a==='addCat'){cfg.cats.push({nome:'Nova categoria',teto:0,chaves:[]});saveCfg(true);render()}
+  else if(t.dataset.del){const id=t.dataset.del;if(ui.confirmDel===id){ui.confirmDel=null;mutate({t:'del',id})}else{ui.confirmDel=id;render()}}
+  else if(t.dataset.dep||t.dataset.ret){const i=+(t.dataset.dep||t.dataset.ret);const v=parseNum($('#dep'+i).value);if(!(v>0)){toast('Digite um valor');return}
+    cfg.metas[i].guardado=Math.round(((+cfg.metas[i].guardado||0)+(t.dataset.dep?v:-v))*100)/100;
+    (cfg.depositos=cfg.depositos||[]).push({data:new Date().toISOString().slice(0,10),meta:cfg.metas[i].nome,valor:t.dataset.dep?v:-v});
+    if(cfg.depositos.length>300)cfg.depositos=cfg.depositos.slice(-300);
+    saveCfg(true);render();toast(t.dataset.dep?`Guardado em ${cfg.metas[i].nome}`:`Retirado de ${cfg.metas[i].nome}`)}
+  else if(t.dataset.tem){const m=cfg.moveis[+t.dataset.tem];m.tenho=!m.tenho;saveCfg(true);render()}
+  else if(t.dataset.frm){cfg.fixos.splice(+t.dataset.frm,1);saveCfg(true);render()}
+});
+document.addEventListener('change',e=>{
+  const el=e.target, d=el.dataset, cfg=cfgOf();
+  if(el.id==='fileIn'&&el.files[0]){handleFile(el.files[0]);return}
+  if(el.id==='bankSel'){ui.bank=el.value;return}
+  if(d.keep!==undefined){ui.preview.rows[+d.keep].keep=el.checked;const n=ui.preview.rows.filter(r=>r.keep).length;const b=$('#doImport');b.textContent='Importar '+n;b.disabled=!n;return}
+  if(d.pcat!==undefined){ui.preview.rows[+d.pcat].cat=el.value;return}
+  if(d.cat){const tx=store.lanc[d.cat];if(!tx)return;
+    mutate({t:'upd',id:d.cat,patch:{cat:el.value}},true);
+    const key=norm(tx.desc).split(' ').slice(0,3).join(' ');
+    if(key.length>=4){cfg.regras=cfg.regras||{};cfg.regras[key]=el.value;saveCfg(true);toast(`Próximos "${key}" vão para ${el.value}`)}
+    render();return}
+  const n=v=>{const x=parseNum(v);return isNaN(x)?0:Math.round(x*100)/100};
+  if(d.set==='salario')cfg.salario=n(el.value);
+  else if(d.fn!==undefined)cfg.fixos[+d.fn].nome=el.value.trim();
+  else if(d.fv!==undefined)cfg.fixos[+d.fv].valor=n(el.value);
+  else if(d.cn!==undefined){const old=cfg.cats[+d.cn].nome;cfg.cats[+d.cn].nome=el.value.trim();if(old!==el.value.trim())toast('Lançamentos antigos mantêm o nome anterior')}
+  else if(d.ct!==undefined)cfg.cats[+d.ct].teto=n(el.value);
+  else if(d.ck!==undefined)cfg.cats[+d.ck].chaves=el.value.split(',').map(s=>s.trim()).filter(Boolean);
+  else if(d.dn!==undefined)cfg.divisao[+d.dn].nome=el.value.trim();
+  else if(d.dp!==undefined)cfg.divisao[+d.dp].pct=n(el.value)/100;
+  else if(d.preco!==undefined)cfg.moveis[+d.preco].preco=n(el.value);
+  else if(d.casa!==undefined)cfg.casa[+d.casa].valor=n(el.value);
+  else return;
+  saveCfg();render();
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.id==='addForm'){
+    const v=parseNum($('#fVal').value); if(!(v>0)){toast('Valor inválido');return}
+    const data=$('#fData').value||new Date().toISOString().slice(0,10);
+    const valor=v*(+$('#fTipo').value);
+    mutate({t:'set',id:'m'+uid(),doc:{data,mes:data.slice(0,7),desc:$('#fDesc').value.trim(),valor:Math.round(valor*100)/100,cat:$('#fCat').value,banco:$('#fBank').value,origem:'manual'}},true);
+    ui.adding=false; ym=data.slice(0,7); render(); toast('Lançamento salvo');
+  } else if(e.target.id==='addMovel'){
+    cfgOf().moveis.push({id:uid(),nome:$('#mvNome').value.trim(),prio:$('#mvPrio').value,preco:0,tenho:false});saveCfg(true);render();
+  }
+});
+/* ao voltar para o app: busca mudanças de outro aparelho e bancos novos */
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&token&&store&&!saving){pull().then(()=>{render();syncBancos(false)}).catch(()=>{})}});
+
+/* ---------- início ---------- */
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();
+const waitGis=setInterval(()=>{if(window.google?.accounts?.oauth2){clearInterval(waitGis);initAuth()}},200);
+if(token)afterLogin(); else {net={state:'login',msg:''};render()}
+})();
+</script>
+</body>
+</html>
