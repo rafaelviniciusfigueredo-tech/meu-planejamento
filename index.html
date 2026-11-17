@@ -18,15 +18,18 @@
   --warn:#A86A06; --warn-soft:#F8EBD2; --bad:#B4372B; --bad-soft:#F7DEDA; --good:#17734F;
   --f-display:"Sora",ui-sans-serif,system-ui,sans-serif; --f-body:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --r:14px;
+  --c1:#17734F; --c2:#C2601E; --c3:#3F63B5; --c4:#A23E73; --c5:#8A7A12; --c6:#2C8C9A; --c7:#7A5BC4; --c8:#8C9690;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0F1512; --surface:#18201C; --sunk:#222C27; --ink:#E6EEE9; --muted:#97A69E; --line:#2D3832;
   --accent:#4CC28F; --accent-ink:#06140D; --accent-soft:#183B2C;
-  --warn:#E3A93E; --warn-soft:#3A2D14; --bad:#F07A6C; --bad-soft:#3C1E1A; --good:#4CC28F; color-scheme:dark}}
+  --warn:#E3A93E; --warn-soft:#3A2D14; --bad:#F07A6C; --bad-soft:#3C1E1A; --good:#4CC28F;
+  --c1:#4CC28F; --c2:#F0935A; --c3:#7E9EF0; --c4:#E07BB0; --c5:#D6C34E; --c6:#5CC5D2; --c7:#B49BF2; --c8:#8E9A94; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0F1512; --surface:#18201C; --sunk:#222C27; --ink:#E6EEE9; --muted:#97A69E; --line:#2D3832;
   --accent:#4CC28F; --accent-ink:#06140D; --accent-soft:#183B2C;
-  --warn:#E3A93E; --warn-soft:#3A2D14; --bad:#F07A6C; --bad-soft:#3C1E1A; --good:#4CC28F; color-scheme:dark}
+  --warn:#E3A93E; --warn-soft:#3A2D14; --bad:#F07A6C; --bad-soft:#3C1E1A; --good:#4CC28F;
+  --c1:#4CC28F; --c2:#F0935A; --c3:#7E9EF0; --c4:#E07BB0; --c5:#D6C34E; --c6:#5CC5D2; --c7:#B49BF2; --c8:#8E9A94; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{background:var(--bg);color:var(--ink);margin:0}
 body{font-family:var(--f-body);font-size:15px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(84px + env(safe-area-inset-bottom,0px))}
@@ -100,6 +103,22 @@ nav.tabs button svg{width:22px;height:22px}
 nav.tabs button[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:.88rem;z-index:20;max-width:90vw}
 .empty{padding:18px 4px;text-align:center;color:var(--muted)}
+.alert{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:.9rem}
+.donut{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.donut svg{width:132px;height:132px;flex:none}
+.legend{display:flex;flex-direction:column;gap:5px;flex:1;min-width:150px;font-size:.85rem}
+.legend .kv i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{font-family:var(--f-body);font-size:10px;fill:var(--muted)}
+.keys{display:flex;gap:14px;font-size:.8rem;color:var(--muted)}
+.keys i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.filters{gap:8px}
+.filters input[type=search]{width:100%}
+.filters .actions select{flex:1;min-width:120px}
+.toggle.wide{padding:6px 12px}
+.rule{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:.88rem}
+.rule:last-child{border-bottom:0}
+.rule span{flex:1;min-width:0;overflow-wrap:anywhere}
 @media (prefers-reduced-motion:no-preference){.bar i{transition:width .4s ease}}
 </style>
 </head>
@@ -256,7 +275,13 @@ function logout(){
 /* ajustes únicos nos dados (rodam uma vez só, marcados em config.migr) */
 function migrar(){
   const cfg=store?.config; if(!cfg)return;
-  const feitos=cfg.migr||[]; if(feitos.includes('v2'))return;
+  const feitos=cfg.migr||[];
+  if(!feitos.includes('v3')){ // regras genéricas demais (ex.: "pix enviado ·") pegavam todo Pix
+    const c3=JSON.parse(JSON.stringify(cfg)); let mudou=false;
+    for(const k of Object.keys(c3.regras||{})){const nk=k.replace(/·/g,' ').replace(/\s+/g,' ').trim();if(nk.length<4||GENERICO.test(nk)&&!nk.replace(GENERICO,'').trim()){delete c3.regras[k];mudou=true}}
+    c3.migr=[...feitos,'v3']; mutate({t:'cfg',cfg:c3},true); return migrar();
+  }
+  if(feitos.includes('v2'))return;
   const ops=[], c2=JSON.parse(JSON.stringify(cfg));
   for(const c of c2.cats||[]) if(norm(c.nome)==='cosmeticos'){c.nome='Estética';for(const k of ['salao','barbearia','estetica','manicure'])if(!(c.chaves||[]).includes(k))(c.chaves=c.chaves||[]).push(k)}
   for(const [id,t] of Object.entries(store.lanc||{})) if(norm(t.cat)==='cosmeticos')ops.push({t:'upd',id,patch:{cat:'Estética'}});
@@ -333,6 +358,13 @@ const PLUGGY_MAP=[
 function isFixo(n){for(const f of cfgOf()?.fixos||[]){const fn=norm(f.nome);if(fn.length>=4&&n.includes(fn))return true;for(const w of f.chaves||[]){if(kw(n,w))return true}}return false}
 const EMPRESA=/\b(ltda|s\/?a|s\.a\.?|me|eireli|epp|servicos|serviços|comercio|comércio|pagamentos|bank|banco|instituicao|instituição|empreendimentos|participacoes|participações|intermediacao|intermediações|intermediacoes|solucoes|soluções|marketplace|drogaria|farmac|varejo|food)\b/i;
 function isPixPessoa(desc){const m=String(desc||'').match(/^pix enviado\s*·\s*(.+)$/i);if(!m)return false;const r=m[1].trim();if(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(r))return true;return !EMPRESA.test(r)}
+/* chave da regra: tira o começo genérico ("pix enviado", "compra no debito"…) e usa as 3 palavras seguintes */
+const GENERICO=/^(pix (enviado|recebido)|transferencia (enviada|recebida)|compra (no )?(debito|credito)|pagamento (de )?(boleto|conta)?|devolucao de recebimento via pix|ted|doc)\s*/;
+function ruleKey(desc){
+  let n=norm(desc).replace(/·/g,' ').replace(/\s+/g,' ').trim();
+  const r=n.replace(GENERICO,'').trim(); if(r.length>=4)n=r;
+  return n.split(' ').slice(0,3).join(' ');
+}
 function catName(n){const c=(cfgOf()?.cats||[]).find(x=>norm(x.nome)===norm(n));return c?c.nome:null}
 function categorizePluggy(t){
   const cfg=cfgOf(), n=norm(t.desc), cp=String(t.categoriaPluggy||'');
@@ -493,6 +525,54 @@ function calc(txs){
   return {fixos,tetos,sal,prevista,entradas,saidas,porCat,real:(entradas||sal)-saidas,usouSal:!entradas};
 }
 
+function allTxs(){if(!store)return [];const out=[];for(const id in store.lanc){const t=store.lanc[id];if(t)out.push({id,...t})}return out.sort((a,b)=>b.data.localeCompare(a.data))}
+function txsOf(k){return allTxs().filter(t=>t.mes===k)}
+function shortMonth(k){const [y,m]=k.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','')}
+
+/* alertas de orçamento: categorias acima de 80% do teto */
+function alertas(c){
+  return (cfgOf().cats||[]).filter(k=>+k.teto>0).map(k=>({nome:k.nome,g:c.porCat[k.nome]||0,t:+k.teto}))
+    .filter(a=>a.g/a.t>=.8).sort((a,b)=>b.g/b.t-a.g/a.t);
+}
+function vAlertas(c){
+  const al=alertas(c); if(!al.length)return '';
+  return `<div class="card"><h2>Atenção ao limite</h2>${al.map(a=>{const p=a.g/a.t;return `<div class="alert"><span>${esc(a.nome)}</span>
+    <span class="pill ${p>1?'bad':'warn'} num">${p>1?`passou ${fmt(a.g-a.t)}`:`usou ${Math.round(p*100)}%, resta ${fmt(a.t-a.g)}`}</span></div>`}).join('')}</div>`;
+}
+
+/* gráfico de rosca: para onde foi o dinheiro */
+function vRosca(c){
+  const items=Object.entries(c.porCat).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(!items.length)return '';
+  const tot=items.reduce((s,[,v])=>s+v,0);
+  let top=items.slice(0,7); if(items.length>7)top.push(['Demais',items.slice(7).reduce((s,[,v])=>s+v,0)]);
+  let acc=0;
+  const segs=top.map(([,v],i)=>{const p=v/tot*100;const s=`<circle r="15.915" cx="21" cy="21" fill="none" stroke="var(--c${i+1})" stroke-width="6" stroke-dasharray="${Math.max(0,p-.6).toFixed(2)} ${(100-Math.max(0,p-.6)).toFixed(2)}" stroke-dashoffset="${(25-acc).toFixed(2)}"/>`;acc+=p;return s}).join('');
+  return `<div class="card"><h2>Para onde foi o dinheiro</h2><div class="donut">
+    <svg viewBox="0 0 42 42" role="img" aria-label="Gastos por categoria"><circle r="15.915" cx="21" cy="21" fill="none" stroke="var(--sunk)" stroke-width="6"/>${segs}
+      <text x="21" y="20" text-anchor="middle" style="font:600 3.4px var(--f-display);fill:var(--ink)">${esc(fmt(tot))}</text>
+      <text x="21" y="25" text-anchor="middle" style="font:2.6px var(--f-body);fill:var(--muted)">saiu no mês</text></svg>
+    <div class="legend">${top.map(([n,v],i)=>`<div class="kv"><span><i style="background:var(--c${i+1})"></i>${esc(n)}</span><span class="num">${fmt(v)} <span class="muted">${Math.round(v/tot*100)}%</span></span></div>`).join('')}</div></div></div>`;
+}
+
+/* barras: últimos 6 meses, entrou x saiu */
+function vSeisMeses(){
+  const ks=[5,4,3,2,1,0].map(n=>shiftMonth(ym,-n));
+  const rows=ks.map(k=>{const c=calc(txsOf(k));return {k,e:c.entradas,s:c.saidas}});
+  if(!rows.some(r=>r.e||r.s))return '';
+  const max=Math.max(...rows.map(r=>Math.max(r.e,r.s)))||1;
+  const W=320,H=150,top=12,base=118,gw=W/6,bw=15;
+  const h=v=>Math.round(v/max*(base-top));
+  const bars=rows.map((r,i)=>{const x=i*gw+gw/2;const he=h(r.e),hs=h(r.s);const cur=r.k===ym;
+    return `<rect x="${x-bw-1.5}" y="${base-he}" width="${bw}" height="${he}" rx="3" fill="var(--c1)"/>
+      <rect x="${x+1.5}" y="${base-hs}" width="${bw}" height="${hs}" rx="3" fill="var(--c2)"/>
+      <text x="${x}" y="${base+14}" text-anchor="middle" style="${cur?'fill:var(--ink);font-weight:600':''}">${shortMonth(r.k)}</text>
+      <text x="${x}" y="${base+27}" text-anchor="middle" style="fill:${r.e-r.s>=0?'var(--good)':'var(--bad)'}">${r.e?(r.e-r.s>=0?'+':'−')+Math.round(Math.abs(r.e-r.s)/100)/10+'k':''}</text>`}).join('');
+  return `<div class="card chart"><h2>Últimos 6 meses</h2>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Entradas e saídas dos últimos 6 meses"><line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="var(--line)"/>${bars}</svg>
+    <div class="keys"><span><i style="background:var(--c1)"></i>Entrou</span><span><i style="background:var(--c2)"></i>Saiu</span><span>embaixo: quanto sobrou</span></div></div>`;
+}
+
 /* ---------- telas ---------- */
 function vMes(){
   const cfg=cfgOf(), c=calc(monthTxs());
@@ -507,8 +587,11 @@ function vMes(){
     <div class="card hero"><span class="eyebrow">Sobrou em ${esc(monthName(ym))}</span>
       <span class="big num">${fmt(c.real)}</span>
       <div class="row num"><span>Entrou ${fmt(c.usouSal?c.sal:c.entradas)}${c.usouSal?' (salário previsto)':''}</span><span>Saiu ${fmt(c.saidas)}</span></div></div>
+    ${vAlertas(c)}
     <div class="card"><h2>Gastos variáveis do mês</h2>${cats||'<p class="empty">Nenhum gasto variável neste mês.</p>'}
       ${fixPago?`<div class="kv note"><span>Contas fixas que apareceram no extrato</span><span class="num">${fmt(fixPago)}</span></div>`:''}</div>
+    ${vRosca(c)}
+    ${vSeisMeses()}
     <div class="card"><h2>Planejado</h2>
       <div class="kv"><span>Salário</span><span class="num">${fmt(c.sal)}</span></div>
       <div class="kv"><span>Custos fixos</span><span class="num">− ${fmt(c.fixos)}</span></div>
@@ -516,8 +599,33 @@ function vMes(){
       <div class="kv total"><span>Sobra prevista</span><span class="num">${fmt(c.prevista)}</span></div></div>
   </section>`;
 }
+function filtrar(){
+  const q=norm(ui.q||''), qn=/\d/.test(ui.q||'')?parseNum(ui.q):NaN;
+  let txs=ui.fAll?allTxs():monthTxs();
+  if(ui.fCat)txs=txs.filter(t=>t.cat===ui.fCat);
+  if(ui.fBank)txs=txs.filter(t=>t.banco===ui.fBank);
+  if(q)txs=txs.filter(t=>norm(t.desc).includes(q)||(!isNaN(qn)&&Math.abs(Math.abs(t.valor)-qn)<.01));
+  return txs;
+}
+function vFiltros(txs){
+  const bancos=[...new Set(allTxs().map(t=>t.banco).filter(Boolean))].sort();
+  const ativo=ui.q||ui.fCat||ui.fBank||ui.fAll;
+  const sai=txs.filter(t=>t.valor<0&&t.cat!==SPECIAL.MOVE).reduce((s,t)=>s-t.valor,0), ent=txs.filter(t=>t.valor>0&&t.cat!==SPECIAL.MOVE).reduce((s,t)=>s+t.valor,0);
+  return `<div class="card filters">
+    <input type="search" id="q" placeholder="Buscar: Uber, mercado, 45,90…" value="${esc(ui.q||'')}" aria-label="Buscar lançamentos" autocomplete="off">
+    <div class="actions"><select id="flCat" aria-label="Filtrar por categoria"><option value="">Todas as categorias</option>${catOptions(ui.fCat||'')}</select>
+      <select id="flBank" aria-label="Filtrar por banco"><option value="">Todos os bancos</option>${bancos.map(b=>`<option${b===ui.fBank?' selected':''}>${esc(b)}</option>`).join('')}</select></div>
+    <div class="actions" style="align-items:center"><button class="toggle wide ${ui.fAll?'on':''}" data-a="fAll">${ui.fAll?'Todos os meses':'Só '+esc(monthName(ym))}</button>
+      ${ativo?`<button class="x" data-a="fClear">Limpar filtros</button>`:''}</div>
+    ${ativo?`<p class="note num">${txs.length} lançamento(s) · saiu ${fmt(sai)} · entrou ${fmt(ent)}</p>`:''}</div>`;
+}
+function vRegraAsk(){
+  const r=ui.ruleAsk; if(!r)return '';
+  return `<div class="card banner" style="gap:8px"><span>Mudar também ${r.ids.length} lançamento(s) parecido(s) com "<b>${esc(r.key)}</b>" para <b>${esc(r.cat)}</b>?</span>
+    <div class="actions"><button class="btn small" data-a="ruleAll">Mudar todos</button><button class="btn small ghost" data-a="ruleNo">Só este</button></div></div>`;
+}
 function vLanc(){
-  const txs=monthTxs();
+  const txs=filtrar();
   let body='';
   if(ui.importing) body+=vImport();
   else if(ui.adding) body+=`<div class="card"><h2>Novo lançamento</h2><form class="form" id="addForm">
@@ -529,16 +637,17 @@ function vLanc(){
       <label class="full">Banco<select id="fBank">${BANKS.map(b=>`<option>${b}</option>`).join('')}</select></label>
       <div class="actions full"><button class="btn" type="submit">Salvar</button><button class="btn ghost" type="button" data-a="cancelAdd">Cancelar</button></div></form></div>`;
   else body+=statusLine()+`<div class="actions"><button class="btn" data-a="add">+ Lançamento</button><button class="btn ghost" data-a="import">Importar extrato</button></div>`;
-  if(!txs.length) body+=`<div class="card"><p class="empty">Nenhum lançamento em ${esc(monthName(ym))}.</p></div>`;
+  body+=vRegraAsk()+vFiltros(txs);
+  if(!txs.length) body+=`<div class="card"><p class="empty">${ui.q||ui.fCat||ui.fBank?'Nada encontrado com esses filtros.':'Nenhum lançamento em '+esc(monthName(ym))+'.'}</p></div>`;
   else{
     let last='', rows='';
-    for(const t of txs){
-      if(t.data!==last){last=t.data;const [y,m,d]=t.data.split('-');rows+=`<div class="day">${d}/${m}</div>`}
+    for(const t of txs.slice(0,400)){
+      if(t.data!==last){last=t.data;const [y,m,d]=t.data.split('-');rows+=`<div class="day">${d}/${m}${ui.fAll?'/'+y.slice(2):''}</div>`}
       const open=ui.openTx===t.id;
       rows+=`<div class="tx"><span class="d ${open?'open':''}" data-exp="${t.id}" role="button" tabindex="0" aria-expanded="${open}" title="Toque para ver tudo">${esc(t.desc)}</span><span class="v num ${t.valor>0?'in':''}">${t.valor>0?'+':''}${fmt(t.valor)}</span>
         <div class="meta"><select class="mini" data-cat="${t.id}" aria-label="Categoria">${catOptions(t.cat)}</select>${t.banco?`<span class="pill">${esc(t.banco)}</span>`:''}</div></div>`;
     }
-    body+=`<div class="card"><div class="list">${rows}</div></div>`;
+    body+=`<div class="card"><div class="list">${rows}</div>${txs.length>400?`<p class="note">Mostrando os 400 mais recentes. Use a busca para achar os outros.</p>`:''}</div>`;
   }
   return `<section class="view">${body}</section>`;
 }
@@ -608,6 +717,8 @@ function vAjustes(){
       <div class="actions"><button class="btn small ghost" data-a="addCat">+ Categoria</button></div></div>
     <div class="card"><h2>Divisão da sobra</h2>
       ${(cfg.divisao||[]).map((d,i)=>`<div class="edit-row"><input class="name" data-dn="${i}" value="${esc(d.nome)}"><input class="money num" inputmode="decimal" data-dp="${i}" value="${Math.round(d.pct*100)}" aria-label="Porcentagem"><span class="muted">%</span></div>`).join('')}</div>
+    <div class="card"><h2>Regras aprendidas</h2><p class="note">Quando você troca a categoria de um lançamento, o app guarda uma regra para os próximos parecidos.</p>
+      ${Object.entries(cfg.regras||{}).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v])=>`<div class="rule"><span>"${esc(k)}" → <b>${esc(v)}</b></span><button class="x" data-rrm="${esc(k)}" aria-label="Apagar regra ${esc(k)}">✕</button></div>`).join('')||'<p class="empty">Nenhuma regra ainda.</p>'}</div>
     <div class="card"><h2>Conta</h2><p class="note">Seus dados ficam no arquivo <b>${DATA_NAME}</b>, na pasta MeuPlanejamento do seu Google Drive.</p>
       <div class="actions"><button class="btn small ghost" data-a="logout">Sair da conta Google</button></div></div>
   </section>`;
@@ -633,7 +744,8 @@ function render(){
   if(!ready){app.innerHTML=vLogin();return}
   const ae=document.activeElement, aid=ae&&ae.id;
   app.innerHTML=({mes:vMes,lanc:vLanc,metas:vMetas,casa:vCasa,ajustes:vAjustes}[view]||vMes)();
-  if(aid&&document.getElementById(aid))document.getElementById(aid).focus();
+  const ne=aid&&document.getElementById(aid);
+  if(ne){ne.focus();if(ne.tagName==='INPUT'&&/^(text|search)$/.test(ne.type)){const n=ne.value.length;try{ne.setSelectionRange(n,n)}catch(e){}}}
 }
 
 /* ---------- eventos ---------- */
@@ -642,7 +754,7 @@ $('#prevM').onclick=()=>{ym=shiftMonth(ym,-1);render()};
 $('#nextM').onclick=()=>{ym=shiftMonth(ym,1);render()};
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-a],[data-exp],[data-dep],[data-ret],[data-tem],[data-frm]'); if(!t)return;
+  const t=e.target.closest('[data-a],[data-exp],[data-dep],[data-ret],[data-tem],[data-frm],[data-rrm]'); if(!t)return;
   const a=t.dataset.a, cfg=cfgOf();
   if(a==='login'){login()}
   else if(a==='logout'){logout()}
@@ -654,6 +766,11 @@ document.addEventListener('click',e=>{
   else if(a==='sync'){syncBancos(true)}
   else if(a==='addFixo'){cfg.fixos.push({id:uid(),nome:'Nova conta',valor:0});saveCfg(true);render()}
   else if(a==='addCat'){cfg.cats.push({nome:'Nova categoria',teto:0,chaves:[]});saveCfg(true);render()}
+  else if(a==='fAll'){ui.fAll=!ui.fAll;render()}
+  else if(a==='fClear'){ui.q='';ui.fCat='';ui.fBank='';ui.fAll=false;render()}
+  else if(a==='ruleAll'){const r=ui.ruleAsk;ui.ruleAsk=null;if(r){mutate(r.ids.map(id=>({t:'upd',id,patch:{cat:r.cat}})),true);toast(`${r.ids.length} lançamento(s) foram para ${r.cat}`)}render()}
+  else if(a==='ruleNo'){ui.ruleAsk=null;render()}
+  else if(t.dataset.rrm!==undefined){delete cfg.regras[t.dataset.rrm];saveCfg(true);render();toast('Regra apagada')}
   else if(t.dataset.exp){ui.openTx=ui.openTx===t.dataset.exp?null:t.dataset.exp;render()}
   else if(t.dataset.dep||t.dataset.ret){const i=+(t.dataset.dep||t.dataset.ret);const v=parseNum($('#dep'+i).value);if(!(v>0)){toast('Digite um valor');return}
     cfg.metas[i].guardado=Math.round(((+cfg.metas[i].guardado||0)+(t.dataset.dep?v:-v))*100)/100;
@@ -669,11 +786,18 @@ document.addEventListener('change',e=>{
   if(el.id==='bankSel'){ui.bank=el.value;return}
   if(d.keep!==undefined){ui.preview.rows[+d.keep].keep=el.checked;const n=ui.preview.rows.filter(r=>r.keep).length;const b=$('#doImport');b.textContent='Importar '+n;b.disabled=!n;return}
   if(d.pcat!==undefined){ui.preview.rows[+d.pcat].cat=el.value;return}
+  if(el.id==='flCat'){ui.fCat=el.value;render();return}
+  if(el.id==='flBank'){ui.fBank=el.value;render();return}
   if(d.cat){const tx=store.lanc[d.cat];if(!tx)return;
     mutate({t:'upd',id:d.cat,patch:{cat:el.value}},true);
-    const key=norm(tx.desc).split(' ').slice(0,3).join(' ');
-    if(key.length>=4){cfg.regras=cfg.regras||{};cfg.regras[key]=el.value;saveCfg(true);toast(`Próximos "${key}" vão para ${el.value}`)}
-    render();return}
+    const key=ruleKey(tx.desc);
+    ui.ruleAsk=null;
+    if(key.length>=4){
+      cfg.regras=cfg.regras||{};cfg.regras[key]=el.value;saveCfg(true);
+      const ids=allTxs().filter(t=>t.id!==d.cat&&t.cat!==el.value&&norm(t.desc).includes(key)).map(t=>t.id);
+      if(ids.length)ui.ruleAsk={key,cat:el.value,ids}; else toast(`Próximos "${key}" vão para ${el.value}`);
+    }
+    render();if(ui.ruleAsk)scrollTo({top:0,behavior:'smooth'});return}
   const n=v=>{const x=parseNum(v);return isNaN(x)?0:Math.round(x*100)/100};
   if(d.set==='salario')cfg.salario=n(el.value);
   else if(d.fn!==undefined)cfg.fixos[+d.fn].nome=el.value.trim();
@@ -688,6 +812,7 @@ document.addEventListener('change',e=>{
   else return;
   saveCfg();render();
 });
+document.addEventListener('input',e=>{if(e.target.id==='q'){ui.q=e.target.value;render()}});
 document.addEventListener('submit',e=>{
   e.preventDefault();
   if(e.target.id==='addForm'){
