@@ -276,13 +276,18 @@ function logout(){
 function migrar(){
   const cfg=store?.config; if(!cfg)return;
   const feitos=cfg.migr||[];
+  if(feitos.includes('v6')&&!feitos.includes('v7')){ // peças do ar já estão nas parcelas do cartão
+    const c7=JSON.parse(JSON.stringify(cfg));
+    c7.fixos=(c7.fixos||[]).filter(f=>!/^pecas ar condicionado/.test(norm(f.nome)));
+    c7.migr=[...feitos,'v7']; mutate({t:'cfg',cfg:c7},true); return;
+  }
   if(feitos.includes('v5')&&!feitos.includes('v6')){ // Eraldo é quem recebe a energia: era a mesma conta cadastrada duas vezes
     const c6=JSON.parse(JSON.stringify(cfg));
     c6.fixos=(c6.fixos||[]).filter(f=>norm(f.nome)!==norm('Eraldo (Pix mensal)'));
     const en=c6.fixos.find(f=>norm(f.nome)==='energia');
     if(en){en.nome='Energia (Pix ao Eraldo)';en.valor=280;en.chaves=[...new Set([...(en.chaves||[]),'eraldo cardoso'])]}
     else c6.fixos.push({id:'f'+uid(),nome:'Energia (Pix ao Eraldo)',valor:280,chaves:['eraldo cardoso','coelba','neoenergia']});
-    c6.migr=[...feitos,'v6']; mutate({t:'cfg',cfg:c6},true); return;
+    c6.migr=[...feitos,'v6']; mutate({t:'cfg',cfg:c6},true); return migrar();
   }
   if(feitos.includes('v4')&&!feitos.includes('v5')){ // tetos plausíveis (nov/2026): sem carro para o trabalho, Uber só da namorada no fim de semana
     const c5=JSON.parse(JSON.stringify(cfg));

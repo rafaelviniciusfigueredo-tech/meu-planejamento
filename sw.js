@@ -1,5 +1,5 @@
 ﻿// Guarda o app no celular para abrir rápido e sem internet. Dados do Drive nunca passam por aqui.
-const CACHE = 'mp-v6';
+const CACHE = 'mp-v7';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
