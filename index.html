@@ -322,6 +322,11 @@ function logout(){
 function migrar(){
   const cfg=store?.config; if(!cfg)return;
   const feitos=cfg.migr||[];
+  if(feitos.includes('v10')&&!feitos.includes('v11')){ // teto do Uber: R$ 100 era baixo, média de 3 meses ~R$ 200
+    const c11=JSON.parse(JSON.stringify(cfg));
+    const u=(c11.cats||[]).find(c=>norm(c.nome)==='uber'); if(u)u.teto=200;
+    c11.migr=[...feitos,'v11']; mutate({t:'cfg',cfg:c11},true); return;
+  }
   if(feitos.includes('v9')&&!feitos.includes('v10')){ // Estética já tem teto de R$ 100: tira o fixo repetido de R$ 70
     const c10=JSON.parse(JSON.stringify(cfg));
     c10.fixos=(c10.fixos||[]).filter(f=>norm(f.nome)!=='estetica');
